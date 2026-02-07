@@ -10,6 +10,7 @@
 
 #include "shader_processor.h"
 #include "sphere_data.h"
+#include "model_loader.h"
 
 void generateSphereBuffers(
 	std::unique_ptr<lvk::IContext>& ctx,
@@ -20,6 +21,33 @@ void generateSphereBuffers(
 {
 	// Generate UV sphere
 	generateUVSphere(1.0f, 32, 64, vertData, indexData);
+	// Vertex buffer
+	lvk::BufferDesc vertBufDesc{};
+	vertBufDesc.usage = lvk::BufferUsageBits_Vertex;
+	vertBufDesc.storage = lvk::StorageType_Device;
+	vertBufDesc.size = sizeof(Vertex) * vertData.size();
+	vertBufDesc.data = vertData.data();
+	vertBufDesc.debugName = "Buffer: vertex";
+	vertBufHandle = ctx->createBuffer(vertBufDesc);
+	// Index Buffer
+	lvk::BufferDesc indexBufDes{};
+	indexBufDes.usage = lvk::BufferUsageBits_Index;
+	indexBufDes.storage = lvk::StorageType_Device;
+	indexBufDes.size = sizeof(uint32_t) * indexData.size();
+	indexBufDes.data = indexData.data();
+	indexBufDes.debugName = "Buffer: index";
+	IndexBufHandle = ctx->createBuffer(indexBufDes);
+}
+
+void loadMonkeyModel (
+	std::unique_ptr<lvk::IContext>& ctx,
+	std::vector<Vertex>& vertData,
+	std::vector<uint32_t>& indexData,
+	lvk::Holder<lvk::BufferHandle>& vertBufHandle,
+	lvk::Holder<lvk::BufferHandle>& IndexBufHandle)
+{
+	loadModelData(std::filesystem::absolute(RESOURCE_DIR"/models/monkey.glb"), vertData, indexData);
+
 	// Vertex buffer
 	lvk::BufferDesc vertBufDesc{};
 	vertBufDesc.usage = lvk::BufferUsageBits_Vertex;
@@ -73,7 +101,8 @@ int main()
 		lvk::Holder<lvk::BufferHandle> vertexBuffer;
 		lvk::Holder<lvk::BufferHandle> indexBuffer;
 
-		generateSphereBuffers(ctx, verts, indices, vertexBuffer, indexBuffer);
+		//generateSphereBuffers(ctx, verts, indices, vertexBuffer, indexBuffer);
+		loadMonkeyModel(ctx, verts, indices, vertexBuffer, indexBuffer);
 
 		// Attributes
 		const lvk::VertexInput vdesc = {

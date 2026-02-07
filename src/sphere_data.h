@@ -6,12 +6,9 @@
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
 
-inline constexpr float kPI = 3.14159265359f;
+#include "model_loader.h"
 
-struct Vertex
-{
-    glm::vec3 position;
-};
+inline constexpr float kPI = 3.14159265359f;
 
 inline void generateUVSphere(float radius, unsigned int stacks, unsigned int sectors, std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
 {
