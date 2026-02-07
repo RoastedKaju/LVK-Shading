@@ -39,7 +39,7 @@ void generateSphereBuffers(
 	IndexBufHandle = ctx->createBuffer(indexBufDes);
 }
 
-void loadMonkeyModel (
+void loadMonkeyModel(
 	std::unique_ptr<lvk::IContext>& ctx,
 	std::vector<Vertex>& vertData,
 	std::vector<uint32_t>& indexData,
@@ -149,6 +149,24 @@ int main()
 		LVK_ASSERT(soildPipeline.valid());
 		LVK_ASSERT(wireframePipeline.valid());
 
+		// Uniform Buffer
+		struct UniformData
+		{
+			glm::mat4 model;
+			glm::mat4 view;
+			glm::mat4 proj;
+			glm::vec4 color;
+			glm::vec4 ambientColor;
+		};
+
+		lvk::Holder<lvk::BufferHandle> uniformBuffer = ctx->createBuffer(
+			{ .usage = lvk::BufferUsageBits_Uniform,
+			  .storage = lvk::StorageType_Device,
+			  .size = sizeof(UniformData),
+			  .debugName = "Buffer: per-frame" },
+			nullptr);
+
+		// Render Loop
 		while (!glfwWindowShouldClose(window))
 		{
 			glfwPollEvents();
@@ -190,9 +208,17 @@ int main()
 			{
 				glm::mat4 mvp;
 			} pc = { .mvp = p * v * model };
+			// Uniform version
+			UniformData uniformData{};
+			uniformData.color = glm::vec4(0.8f, 0.5f, 0.0f, 1.0f);
+			uniformData.model = model;
+			uniformData.proj = p;
+			uniformData.view = v;
+			uniformData.ambientColor = glm::vec4(1.0f);
 
 			// Command buffer
 			lvk::ICommandBuffer& buff = ctx->acquireCommandBuffer();
+			buff.cmdUpdateBuffer(uniformBuffer, uniformData);
 			// Begin Rendering
 			buff.cmdBeginRendering(renderPass, framebuffer);
 			buff.cmdPushDebugGroupLabel("Render Triangle", 0xff0000ff);
@@ -203,7 +229,8 @@ int main()
 				// Bind solid pipeline
 				buff.cmdBindRenderPipeline(soildPipeline);
 				buff.cmdBindDepthState({ .compareOp = lvk::CompareOp_Less, .isDepthWriteEnabled = true });
-				buff.cmdPushConstants(pc);
+				//buff.cmdPushConstants(pc);
+				buff.cmdPushConstants(ctx->gpuAddress(uniformBuffer));
 				buff.cmdDrawIndexed((uint32_t)indices.size());
 
 				// Bind Wireframe Pipeline
