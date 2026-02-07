@@ -22,5 +22,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DI
 
 
 add_subdirectory("external/lvk")
+add_subdirectory("external/assimp")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE glfw LVKLibrary LVKstb ktx)
+target_link_libraries(${PROJECT_NAME} PRIVATE glfw LVKLibrary LVKstb ktx assimp)
