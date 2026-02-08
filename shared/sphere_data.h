@@ -36,12 +36,12 @@ inline void generateUVSphere(float radius, unsigned int stacks, unsigned int sec
             vert.position.y = radius * y;
             vert.position.z = radius * z;
 
-            //vert.nx = x;
-            //vert.ny = y;
-            //vert.nz = z;
+            vert.normal.x = x;
+            vert.normal.y = y;
+            vert.normal.z = z;
 
-            //vert.u = u;
-            //vert.v = 1.0f - v;
+            vert.uv.x = u;
+            vert.uv.y = 1.0f - v;
 
             vertices.push_back(vert);
         }

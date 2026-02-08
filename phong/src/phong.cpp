@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 #include <filesystem>
+#include <string>
 
 #include <lvk/LVK.h>
 #include <GLFW/glfw3.h>
@@ -13,14 +14,16 @@
 #include "sphere_data.h"
 #include "model_loader.h"
 
+static int meshDataIndex = 0;
 static bool showWireframe = false;
 static bool autoRotateMesh = true;
-static float meshColor[3] = { 0.8f, 0.5f, 0.0f };
+static float baseColor[3] = { 0.8f, 0.5f, 0.0f };
+static float diffuseIntensity = 1.0f;
 static float ambientColor[3] = { 1.0f , 1.0f , 1.0f };
-static float ambientStrength = 0.1f; // We will use ambientColor's 4th component for this
+static float ambientStrength = 0.1f;
 static float lightPosition[3] = { 14.0f, 7.0f, 7.0f };
 static float cameraPosition[3] = { 0.0f, 0.15f, 0.35f };
-static float specularStrength = 0.5f; // We will use cameraPosition's 4th component for this
+static float specularStrength = 0.5f;
 
 void generateSphereBuffers(
 	std::unique_ptr<lvk::IContext>& ctx,
@@ -30,7 +33,7 @@ void generateSphereBuffers(
 	lvk::Holder<lvk::BufferHandle>& IndexBufHandle)
 {
 	// Generate UV sphere
-	generateUVSphere(1.0f, 32, 64, vertData, indexData);
+	generateUVSphere(0.15f, 32, 64, vertData, indexData);
 	// Vertex buffer
 	lvk::BufferDesc vertBufDesc{};
 	vertBufDesc.usage = lvk::BufferUsageBits_Vertex;
@@ -49,7 +52,7 @@ void generateSphereBuffers(
 	IndexBufHandle = ctx->createBuffer(indexBufDes);
 }
 
-void loadMonkeyModel(
+void loadBunnyMesh(
 	std::unique_ptr<lvk::IContext>& ctx,
 	std::vector<Vertex>& vertData,
 	std::vector<uint32_t>& indexData,
@@ -98,11 +101,19 @@ void showUI(
 	lvk::ICommandBuffer& cmdBuff
 )
 {
+	static const char* meshNames[] =
+	{
+		"UV-Sphere",
+		"Bunny"
+	};
+
 	imgui.beginFrame(framebuff);
 	ImGui::Begin("Render Options", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Combo("Mesh", &meshDataIndex, meshNames, 2);
 	ImGui::Checkbox("Show Wireframe", &showWireframe);
 	ImGui::Checkbox("Auto Rotate Mesh", &autoRotateMesh);
-	ImGui::ColorEdit3("Mesh Color", meshColor);
+	ImGui::ColorEdit3("Base Color", baseColor);
+	ImGui::SliderFloat("Diffuse/Base Color Intensity", &diffuseIntensity, 0.0f, 10.0f);
 	ImGui::ColorEdit3("Light Color", ambientColor);
 	ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0.0f, 1.0f);
 	ImGui::DragFloat3("Light Position", lightPosition);
@@ -146,13 +157,16 @@ int main()
 
 		// Buffers
 		// Sphere Data and Buffers
-		std::vector<Vertex> verts;
-		std::vector<uint32_t> indices;
-		lvk::Holder<lvk::BufferHandle> vertexBuffer;
-		lvk::Holder<lvk::BufferHandle> indexBuffer;
+		struct MeshData
+		{
+			std::vector<Vertex> verts;
+			std::vector<uint32_t> indices;
+			lvk::Holder<lvk::BufferHandle> vertexBuffer;
+			lvk::Holder<lvk::BufferHandle> indexBuffer;
+		} md[2];
 
-		//generateSphereBuffers(ctx, verts, indices, vertexBuffer, indexBuffer);
-		loadMonkeyModel(ctx, verts, indices, vertexBuffer, indexBuffer);
+		generateSphereBuffers(ctx, md[0].verts, md[0].indices, md[0].vertexBuffer, md[0].indexBuffer);
+		loadBunnyMesh(ctx, md[1].verts, md[1].indices, md[1].vertexBuffer, md[1].indexBuffer);
 
 		// Attributes
 		const lvk::VertexInput vdesc = {
@@ -220,6 +234,7 @@ int main()
 			glm::vec4 ambientColor;
 			glm::vec4 lightPosition;
 			glm::vec4 cameraPosition;
+			glm::vec4 lightingParams;
 		};
 
 		lvk::Holder<lvk::BufferHandle> uniformBuffer = ctx->createBuffer(
@@ -240,8 +255,15 @@ int main()
 
 			const float ratio = width / static_cast<float>(height);
 
+			glm::vec3 meshPosition{ 0.0f, 0.0f, 0.0f };
+			// Adjust translation offset for sphere
+			if (meshDataIndex == 0)
+			{
+				meshPosition = glm::vec3(0.0f, 0.1f, 0.0f);
+			}
+
 			glm::mat4 model = glm::mat4(1.0f);          // identity
-			model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+			model = glm::translate(model, meshPosition);
 			const float rotationSpeed = autoRotateMesh ? 15.0f : 0.0f;
 			model = glm::rotate(model, glm::radians((float)glfwGetTime() * rotationSpeed), glm::vec3(0.0f, 1.0f, 0.0f));
 			model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
@@ -274,13 +296,14 @@ int main()
 			} pc = { .mvp = p * v * model };
 			// Uniform version
 			UniformData uniformData{};
-			uniformData.color = glm::vec4(meshColor[0], meshColor[1], meshColor[2], 1.0f);
+			uniformData.color = glm::vec4(baseColor[0], baseColor[1], baseColor[2], diffuseIntensity);
 			uniformData.model = model;
 			uniformData.proj = p;
 			uniformData.view = v;
 			uniformData.ambientColor = glm::vec4(ambientColor[0], ambientColor[1], ambientColor[2], ambientStrength);
 			uniformData.lightPosition = glm::vec4(lightPosition[0], lightPosition[1], lightPosition[2], 1.0f);
-			uniformData.cameraPosition = glm::vec4(cameraPosition[0], cameraPosition[1], cameraPosition[2], specularStrength); // Use the 4th Component to store specular strength
+			uniformData.cameraPosition = glm::vec4(cameraPosition[0], cameraPosition[1], cameraPosition[2], 1.0f);
+			uniformData.lightingParams = glm::vec4(specularStrength, 1.0f, 0.0f, 0.0f);
 
 			// Command buffer
 			lvk::ICommandBuffer& buff = ctx->acquireCommandBuffer();
@@ -290,14 +313,14 @@ int main()
 			buff.cmdPushDebugGroupLabel("Render Triangle", 0xff0000ff);
 			{
 				// Bindings
-				buff.cmdBindVertexBuffer(0, vertexBuffer);
-				buff.cmdBindIndexBuffer(indexBuffer, lvk::IndexFormat_UI32);
+				buff.cmdBindVertexBuffer(0, md[meshDataIndex].vertexBuffer);
+				buff.cmdBindIndexBuffer(md[meshDataIndex].indexBuffer, lvk::IndexFormat_UI32);
 				// Bind solid pipeline
 				buff.cmdBindRenderPipeline(soildPipeline);
 				buff.cmdBindDepthState({ .compareOp = lvk::CompareOp_Less, .isDepthWriteEnabled = true });
 				//buff.cmdPushConstants(pc);
 				buff.cmdPushConstants(ctx->gpuAddress(uniformBuffer));
-				buff.cmdDrawIndexed((uint32_t)indices.size());
+				buff.cmdDrawIndexed((uint32_t)md[meshDataIndex].indices.size());
 
 				// Bind Wireframe Pipeline
 				if (showWireframe)
@@ -305,7 +328,7 @@ int main()
 					buff.cmdBindRenderPipeline(wireframePipeline);
 					buff.cmdSetDepthBiasEnable(true);
 					buff.cmdSetDepthBias(0.0f, -1.0f, 0.0f);
-					buff.cmdDrawIndexed((uint32_t)indices.size());
+					buff.cmdDrawIndexed((uint32_t)md[meshDataIndex].indices.size());
 				}
 
 				// UI
