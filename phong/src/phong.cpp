@@ -13,8 +13,9 @@
 #include "sphere_data.h"
 #include "model_loader.h"
 
-// Ambient Color
-// Directional Light
+// Specular
+// Change shader file names
+// Only add relevant shader files per project
 
 static bool showWireframe = false;
 static bool autoRotateMesh = true;
@@ -132,8 +133,8 @@ int main()
 		setMouseCallbacks(window);
 
 		// Shaders
-		lvk::Holder<lvk::ShaderModuleHandle> vert = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/gooch.vert"));
-		lvk::Holder<lvk::ShaderModuleHandle> frag = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/gooch.frag"));
+		lvk::Holder<lvk::ShaderModuleHandle> vert = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/main.vert"));
+		lvk::Holder<lvk::ShaderModuleHandle> frag = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/main.frag"));
 
 		// Depth texture
 		lvk::TextureDesc depthTextureDesc{};

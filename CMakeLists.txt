@@ -5,23 +5,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project("Shading")
 
-# Source files
-file(GLOB_RECURSE SRC_FILES "${CMAKE_SOURCE_DIR}/src/*.h" "${CMAKE_SOURCE_DIR}/src/*.cpp")
+# Add externals
+add_subdirectory("external/lvk")
+add_subdirectory("external/assimp")
 
 # Shader files
 file(GLOB_RECURSE SHADER_FILES "${CMAKE_SOURCE_DIR}/resources/shaders/*")
 
-add_executable(${PROJECT_NAME} ${SRC_FILES} ${SHADER_FILES})
+# Add Shading Modules
+add_subdirectory("phong")
+add_subdirectory("gooch")
 
-# Group shader files
-source_group("Shaders" FILES ${SHADER_FILES})
-
-# Compile definations
-target_compile_definitions(${PROJECT_NAME} PRIVATE RESOURCE_DIR="${CMAKE_SOURCE_DIR}/resources")
-target_compile_definitions(${PROJECT_NAME} PRIVATE SHADER_DIR="${CMAKE_SOURCE_DIR}/resources/shaders")
-
-
-add_subdirectory("external/lvk")
-add_subdirectory("external/assimp")
-
-target_link_libraries(${PROJECT_NAME} PRIVATE glfw LVKLibrary LVKstb ktx assimp)
