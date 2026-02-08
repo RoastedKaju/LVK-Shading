@@ -1,10 +1,11 @@
 set(MODULE_NAME "Phong")
+set(SHADER_DIR "${CMAKE_SOURCE_DIR}/resources/shaders")
 
 # Source files
 file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 # Group shader files
-source_group("Shaders" FILES ${SHADER_FILES})
+source_group("Shaders" FILES "${SHADER_DIR}/phong.frag" "${SHADER_DIR}/phong.vert" "${SHADER_DIR}/common.sp")
 
 add_executable(${MODULE_NAME} ${SRC_FILES} ${SHADER_FILES})
 

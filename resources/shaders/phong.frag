@@ -26,8 +26,15 @@ void main() {
 	float diffFactor = max(dot(normalUnit, lightDirection), 0.0);
 	vec3 diffuseColor = diffFactor * lightColor;
 
+	// Specular
+	float specularStrength = pc.cameraPosition[3]; // 4th Component of Camera Position stores specular strength
+	vec3 viewDir = normalize(vec3(pc.cameraPosition) - vFragPos);
+	vec3 reflectDir = reflect(-lightDirection, normalUnit);  
+	float specFactor = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+	vec3 specular = specularStrength * specFactor * lightColor; 
+
 	// Result
-	vec4 finalColor = objectColor * vec4(ambientColor + diffuseColor, 1.0f);
+	vec4 finalColor = objectColor * vec4(ambientColor + diffuseColor + specular, 1.0f);
 
 	out_FragColor = isWireframe ? vec4(0.0f, 0.0f, 0.0f, 1.0f) : finalColor;
 };

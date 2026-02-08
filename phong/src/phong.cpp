@@ -13,16 +13,14 @@
 #include "sphere_data.h"
 #include "model_loader.h"
 
-// Specular
-// Change shader file names
-// Only add relevant shader files per project
-
 static bool showWireframe = false;
 static bool autoRotateMesh = true;
 static float meshColor[3] = { 0.8f, 0.5f, 0.0f };
 static float ambientColor[3] = { 1.0f , 1.0f , 1.0f };
-static float ambientStrength = 0.1f;
+static float ambientStrength = 0.1f; // We will use ambientColor's 4th component for this
 static float lightPosition[3] = { 14.0f, 7.0f, 7.0f };
+static float cameraPosition[3] = { 0.0f, 0.15f, 0.35f };
+static float specularStrength = 0.5f; // We will use cameraPosition's 4th component for this
 
 void generateSphereBuffers(
 	std::unique_ptr<lvk::IContext>& ctx,
@@ -108,6 +106,7 @@ void showUI(
 	ImGui::ColorEdit3("Light Color", ambientColor);
 	ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0.0f, 1.0f);
 	ImGui::DragFloat3("Light Position", lightPosition);
+	ImGui::SliderFloat("Specular Strength", &specularStrength, 0.0f, 1.0f);
 	ImGui::End();
 	imgui.endFrame(cmdBuff);
 }
@@ -133,8 +132,8 @@ int main()
 		setMouseCallbacks(window);
 
 		// Shaders
-		lvk::Holder<lvk::ShaderModuleHandle> vert = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/main.vert"));
-		lvk::Holder<lvk::ShaderModuleHandle> frag = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/main.frag"));
+		lvk::Holder<lvk::ShaderModuleHandle> vert = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/phong.vert"));
+		lvk::Holder<lvk::ShaderModuleHandle> frag = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/phong.frag"));
 
 		// Depth texture
 		lvk::TextureDesc depthTextureDesc{};
@@ -220,6 +219,7 @@ int main()
 			glm::vec4 color;
 			glm::vec4 ambientColor;
 			glm::vec4 lightPosition;
+			glm::vec4 cameraPosition;
 		};
 
 		lvk::Holder<lvk::BufferHandle> uniformBuffer = ctx->createBuffer(
@@ -247,7 +247,7 @@ int main()
 			model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
 
 			const glm::mat4 v = glm::lookAt(
-				glm::vec3(0.0f, 0.15f, 0.35f),   // camera position
+				glm::vec3(cameraPosition[0], cameraPosition[1], cameraPosition[2]),   // camera position
 				glm::vec3(0.0f, 0.1f, 0.0f),   // look at model
 				glm::vec3(0.0f, 1.0f, 0.0f)    // up direction
 			);
@@ -280,6 +280,7 @@ int main()
 			uniformData.view = v;
 			uniformData.ambientColor = glm::vec4(ambientColor[0], ambientColor[1], ambientColor[2], ambientStrength);
 			uniformData.lightPosition = glm::vec4(lightPosition[0], lightPosition[1], lightPosition[2], 1.0f);
+			uniformData.cameraPosition = glm::vec4(cameraPosition[0], cameraPosition[1], cameraPosition[2], specularStrength); // Use the 4th Component to store specular strength
 
 			// Command buffer
 			lvk::ICommandBuffer& buff = ctx->acquireCommandBuffer();

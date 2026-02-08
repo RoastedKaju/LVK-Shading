@@ -7,6 +7,7 @@ layout(std430, buffer_reference) readonly buffer UniformData {
 	vec4 color;
 	vec4 ambientColor;
 	vec4 lightPosition;
+	vec4 cameraPosition;
 };
 
 layout(push_constant) uniform PushConstants {
