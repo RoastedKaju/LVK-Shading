@@ -18,12 +18,14 @@
 struct Vertex
 {
 	glm::vec3 position;
+	glm::vec3 normal;
 	glm::vec2 uv;
 };
 
 inline void loadModelData(const std::filesystem::path& file, std::vector<Vertex>& outVertices, std::vector<uint32_t>& outIndices)
 {
-	const aiScene* scene = aiImportFile(file.string().c_str(), aiProcess_Triangulate);
+	// For smooth shading add this flag as well aiProcess_GenSmoothNormals
+	const aiScene* scene = aiImportFile(file.string().c_str(), aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices);
 
 	if (!scene || !scene->HasMeshes())
 	{
@@ -45,6 +47,15 @@ inline void loadModelData(const std::filesystem::path& file, std::vector<Vertex>
 		for (unsigned int j = 0; j < 3; j++)
 		{
 			outIndices.push_back(mesh->mFaces[i].mIndices[j]);
+		}
+	}
+	// Normals
+	if (mesh->HasNormals())
+	{
+		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+		{
+			const aiVector3D& n = mesh->mNormals[i];
+			outVertices.at(i).normal = glm::vec3(n.x, n.y, n.z);
 		}
 	}
 	// UVs
