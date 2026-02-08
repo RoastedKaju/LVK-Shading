@@ -7,10 +7,21 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <lvk/HelpersImGui.h>
 
 #include "shader_processor.h"
 #include "sphere_data.h"
 #include "model_loader.h"
+
+// Ambient Color
+// Directional Light
+
+static bool showWireframe = false;
+static bool autoRotateMesh = true;
+static float meshColor[3] = { 0.8f, 0.5f, 0.0f };
+static float ambientColor[3] = { 1.0f , 1.0f , 1.0f };
+static float ambientStrength = 0.1f;
+static float lightPosition[3] = { 14.0f, 7.0f, 7.0f };
 
 void generateSphereBuffers(
 	std::unique_ptr<lvk::IContext>& ctx,
@@ -46,7 +57,8 @@ void loadMonkeyModel(
 	lvk::Holder<lvk::BufferHandle>& vertBufHandle,
 	lvk::Holder<lvk::BufferHandle>& IndexBufHandle)
 {
-	loadModelData(std::filesystem::absolute(RESOURCE_DIR"/models/monkey.glb"), vertData, indexData);
+	//loadModelData(std::filesystem::absolute(RESOURCE_DIR"/models/monkey.glb"), vertData, indexData);
+	loadModelData(std::filesystem::absolute(RESOURCE_DIR"/models/bunny.obj"), vertData, indexData);
 
 	// Vertex buffer
 	lvk::BufferDesc vertBufDesc{};
@@ -66,6 +78,39 @@ void loadMonkeyModel(
 	IndexBufHandle = ctx->createBuffer(indexBufDes);
 }
 
+void setMouseCallbacks(GLFWwindow* window)
+{
+	glfwSetCursorPosCallback(window, [](auto* window, double x, double y) { ImGui::GetIO().MousePos = ImVec2((float)x, (float)y); });
+	glfwSetMouseButtonCallback(window, [](auto* window, int button, int action, int mods) {
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+		const ImGuiMouseButton_ imguiButton = (button == GLFW_MOUSE_BUTTON_LEFT)
+			? ImGuiMouseButton_Left
+			: (button == GLFW_MOUSE_BUTTON_RIGHT ? ImGuiMouseButton_Right : ImGuiMouseButton_Middle);
+		ImGuiIO& io = ImGui::GetIO();
+		io.MousePos = ImVec2((float)xpos, (float)ypos);
+		io.MouseDown[imguiButton] = action == GLFW_PRESS;
+		});
+}
+
+void showUI(
+	lvk::ImGuiRenderer& imgui,
+	lvk::Framebuffer& framebuff,
+	lvk::ICommandBuffer& cmdBuff
+)
+{
+	imgui.beginFrame(framebuff);
+	ImGui::Begin("Render Options", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Checkbox("Show Wireframe", &showWireframe);
+	ImGui::Checkbox("Auto Rotate Mesh", &autoRotateMesh);
+	ImGui::ColorEdit3("Mesh Color", meshColor);
+	ImGui::ColorEdit3("Light Color", ambientColor);
+	ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0.0f, 1.0f);
+	ImGui::DragFloat3("Light Position", lightPosition);
+	ImGui::End();
+	imgui.endFrame(cmdBuff);
+}
+
 int main()
 {
 	minilog::LogConfig configInfo{};
@@ -81,9 +126,14 @@ int main()
 		// Context
 		std::unique_ptr<lvk::IContext> ctx = lvk::createVulkanContextWithSwapchain(window, width, height, {});
 
+		// UI context
+		std::unique_ptr<lvk::ImGuiRenderer> imguiCtx = std::make_unique<lvk::ImGuiRenderer>(*ctx, window, RESOURCE_DIR"/fonts/Terminal.ttf", 13.0f);
+
+		setMouseCallbacks(window);
+
 		// Shaders
-		lvk::Holder<lvk::ShaderModuleHandle> vert = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/main.vert"));
-		lvk::Holder<lvk::ShaderModuleHandle> frag = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/main.frag"));
+		lvk::Holder<lvk::ShaderModuleHandle> vert = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/gooch.vert"));
+		lvk::Holder<lvk::ShaderModuleHandle> frag = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/gooch.frag"));
 
 		// Depth texture
 		lvk::TextureDesc depthTextureDesc{};
@@ -111,7 +161,18 @@ int main()
 					.location = 0,
 					.format = lvk::VertexFormat::Float3,
 					.offset = offsetof(Vertex, position)
-				}
+				},
+				{
+					.location = 1,
+					.format = lvk::VertexFormat::Float3,
+					.offset = offsetof(Vertex, normal)
+				},
+				{
+					.location = 2,
+					.format = lvk::VertexFormat::Float2,
+					.offset = offsetof(Vertex, uv)
+				},
+
 			},
 			.inputBindings = { {.stride = sizeof(Vertex) } }
 		};
@@ -157,6 +218,7 @@ int main()
 			glm::mat4 proj;
 			glm::vec4 color;
 			glm::vec4 ambientColor;
+			glm::vec4 lightPosition;
 		};
 
 		lvk::Holder<lvk::BufferHandle> uniformBuffer = ctx->createBuffer(
@@ -179,12 +241,13 @@ int main()
 
 			glm::mat4 model = glm::mat4(1.0f);          // identity
 			model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-			model = glm::rotate(model, glm::radians((float)glfwGetTime() * 15.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			const float rotationSpeed = autoRotateMesh ? 15.0f : 0.0f;
+			model = glm::rotate(model, glm::radians((float)glfwGetTime() * rotationSpeed), glm::vec3(0.0f, 1.0f, 0.0f));
 			model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
 
 			const glm::mat4 v = glm::lookAt(
-				glm::vec3(0.0f, 1.0f, 3.0f),   // camera position
-				glm::vec3(0.0f, 0.0f, 0.0f),   // look at model
+				glm::vec3(0.0f, 0.15f, 0.35f),   // camera position
+				glm::vec3(0.0f, 0.1f, 0.0f),   // look at model
 				glm::vec3(0.0f, 1.0f, 0.0f)    // up direction
 			);
 			const glm::mat4 p = glm::perspective(45.0f, ratio, 0.1f, 1000.0f);
@@ -210,11 +273,12 @@ int main()
 			} pc = { .mvp = p * v * model };
 			// Uniform version
 			UniformData uniformData{};
-			uniformData.color = glm::vec4(0.8f, 0.5f, 0.0f, 1.0f);
+			uniformData.color = glm::vec4(meshColor[0], meshColor[1], meshColor[2], 1.0f);
 			uniformData.model = model;
 			uniformData.proj = p;
 			uniformData.view = v;
-			uniformData.ambientColor = glm::vec4(1.0f);
+			uniformData.ambientColor = glm::vec4(ambientColor[0], ambientColor[1], ambientColor[2], ambientStrength);
+			uniformData.lightPosition = glm::vec4(lightPosition[0], lightPosition[1], lightPosition[2], 1.0f);
 
 			// Command buffer
 			lvk::ICommandBuffer& buff = ctx->acquireCommandBuffer();
@@ -234,10 +298,16 @@ int main()
 				buff.cmdDrawIndexed((uint32_t)indices.size());
 
 				// Bind Wireframe Pipeline
-				buff.cmdBindRenderPipeline(wireframePipeline);
-				buff.cmdSetDepthBiasEnable(true);
-				buff.cmdSetDepthBias(0.0f, -1.0f, 0.0f);
-				buff.cmdDrawIndexed((uint32_t)indices.size());
+				if (showWireframe)
+				{
+					buff.cmdBindRenderPipeline(wireframePipeline);
+					buff.cmdSetDepthBiasEnable(true);
+					buff.cmdSetDepthBias(0.0f, -1.0f, 0.0f);
+					buff.cmdDrawIndexed((uint32_t)indices.size());
+				}
+
+				// UI
+				showUI(*imguiCtx, framebuffer, buff);
 			}
 			buff.cmdPopDebugGroupLabel();
 			buff.cmdEndRendering();
