@@ -8,7 +8,7 @@ layout(std430, buffer_reference) readonly buffer UniformData {
 	vec4 ambientColor; // 4th ambient Strength
 	vec4 lightPosition;
 	vec4 cameraPosition;
-	vec4 lightingParams; // x = specular strength, y = lighting mode
+	vec4 lightingParams;
 };
 
 layout(push_constant) uniform PushConstants {

@@ -11,5 +11,5 @@ add_subdirectory("external/assimp")
 
 # Add Shading Modules
 add_subdirectory("phong")
-add_subdirectory("gooch")
+add_subdirectory("gouraud")
 

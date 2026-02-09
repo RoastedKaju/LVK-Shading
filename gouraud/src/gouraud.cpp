@@ -59,7 +59,6 @@ void loadBunnyMesh(
 	lvk::Holder<lvk::BufferHandle>& vertBufHandle,
 	lvk::Holder<lvk::BufferHandle>& IndexBufHandle)
 {
-	//loadModelData(std::filesystem::absolute(RESOURCE_DIR"/models/monkey.glb"), vertData, indexData);
 	loadModelData(std::filesystem::absolute(RESOURCE_DIR"/models/bunny.obj"), vertData, indexData);
 
 	// Vertex buffer
@@ -143,8 +142,8 @@ int main()
 		setMouseCallbacks(window);
 
 		// Shaders
-		lvk::Holder<lvk::ShaderModuleHandle> vert = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/phong.vert"));
-		lvk::Holder<lvk::ShaderModuleHandle> frag = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/phong.frag"));
+		lvk::Holder<lvk::ShaderModuleHandle> vert = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/gouraud.vert"));
+		lvk::Holder<lvk::ShaderModuleHandle> frag = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/gouraud.frag"));
 
 		// Depth texture
 		lvk::TextureDesc depthTextureDesc{};

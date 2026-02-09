@@ -14,9 +14,9 @@ layout (constant_id = 0) const bool isWireframe = false;
 
 void main()
 {
+	gl_Position = pc.proj * pc.view * pc.model * vec4(inPos, 1.0f);
+
 	vColor = isWireframe ? vec3(0.0f) : inPos.xyz;
 	vNormal = mat3(transpose(inverse(pc.model))) * inNormal; 
 	vFragPos = vec3(pc.model * vec4(inPos, 1.0f));
-
-	gl_Position = pc.proj * pc.view * pc.model * vec4(inPos, 1.0f);
 }
