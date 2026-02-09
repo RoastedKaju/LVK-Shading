@@ -13,4 +13,5 @@ add_subdirectory("external/assimp")
 add_subdirectory("phong")
 add_subdirectory("gouraud")
 add_subdirectory("flat")
+add_subdirectory("toon")
 
