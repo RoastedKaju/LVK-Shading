@@ -12,4 +12,5 @@ add_subdirectory("external/assimp")
 # Add Shading Modules
 add_subdirectory("phong")
 add_subdirectory("gouraud")
+add_subdirectory("flat")
 
