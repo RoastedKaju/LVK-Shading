@@ -17,7 +17,7 @@
 static int meshDataIndex = 0;
 static bool showWireframe = false;
 static bool autoRotateMesh = true;
-static float baseColor[3] = { 0.8f, 0.5f, 0.0f };
+static float baseColor[3] = { 0.8f, 0.5f, 0.5f };
 static float diffuseIntensity = 1.0f;
 static float ambientColor[3] = { 1.0f , 1.0f , 1.0f };
 static float ambientStrength = 0.1f;
@@ -216,9 +216,9 @@ int main()
 
 			lvk::RenderPass renderPass;
 			renderPass.color[0].loadOp = lvk::LoadOp_Clear;
-			renderPass.color[0].clearColor.float32[0] = 0.5f;
-			renderPass.color[0].clearColor.float32[1] = 0.5f;
-			renderPass.color[0].clearColor.float32[2] = 0.5f;
+			renderPass.color[0].clearColor.float32[0] = 0.0f;
+			renderPass.color[0].clearColor.float32[1] = 0.0f;
+			renderPass.color[0].clearColor.float32[2] = 0.0f;
 			renderPass.color[0].clearColor.float32[3] = 1.0f;
 			renderPass.depth.loadOp = lvk::LoadOp_Clear; // Depth
 			renderPass.depth.clearDepth = 1.0f;

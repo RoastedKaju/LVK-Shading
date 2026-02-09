@@ -20,7 +20,7 @@ static bool autoRotateMesh = true;
 static float baseColor[3] = { 0.8f, 0.5f, 0.0f };
 static float diffuseIntensity = 1.0f;
 static float ambientColor[3] = { 1.0f , 1.0f , 1.0f };
-static float ambientStrength = 0.1f;
+static float ambientStrength = 0.35f;
 static float lightPosition[3] = { 14.0f, 7.0f, 7.0f };
 static float cameraPosition[3] = { 0.0f, 0.15f, 0.35f };
 static float specularStrength = 0.0f;
@@ -111,6 +111,9 @@ int main()
 		loadMesh(ctx, md[1].verts, md[1].indices, md[1].vertexBuffer, md[1].indexBuffer, std::filesystem::absolute(RESOURCE_DIR"/models/bunny.obj"));
 		loadMesh(ctx, md[2].verts, md[2].indices, md[2].vertexBuffer, md[2].indexBuffer, std::filesystem::absolute(RESOURCE_DIR"/models/teapot.glb"));
 
+		// Load textures
+		lvk::Holder<lvk::TextureHandle> patternTexture = loadTexture(std::filesystem::absolute(RESOURCE_DIR"/textures/checkered.jpg"), ctx);
+
 		// Attributes
 		const lvk::VertexInput vdesc = {
 			.attributes = {
@@ -177,6 +180,7 @@ int main()
 			glm::vec4 lightPosition;
 			glm::vec4 cameraPosition;
 			glm::vec4 lightingParams;
+			uint32_t textureId;
 		};
 
 		lvk::Holder<lvk::BufferHandle> uniformBuffer = ctx->createBuffer(
@@ -220,9 +224,9 @@ int main()
 
 			lvk::RenderPass renderPass;
 			renderPass.color[0].loadOp = lvk::LoadOp_Clear;
-			renderPass.color[0].clearColor.float32[0] = 0.5f;
-			renderPass.color[0].clearColor.float32[1] = 0.5f;
-			renderPass.color[0].clearColor.float32[2] = 0.5f;
+			renderPass.color[0].clearColor.float32[0] = 0.0f;
+			renderPass.color[0].clearColor.float32[1] = 0.0f;
+			renderPass.color[0].clearColor.float32[2] = 0.0f;
 			renderPass.color[0].clearColor.float32[3] = 1.0f;
 			renderPass.depth.loadOp = lvk::LoadOp_Clear; // Depth
 			renderPass.depth.clearDepth = 1.0f;
@@ -247,6 +251,7 @@ int main()
 			uniformData.lightPosition = glm::vec4(lightPosition[0], lightPosition[1], lightPosition[2], 1.0f);
 			uniformData.cameraPosition = glm::vec4(cameraPosition[0], cameraPosition[1], cameraPosition[2], 1.0f);
 			uniformData.lightingParams = glm::vec4(specularStrength, (float)toonColorLevels, rimLightPower, 0.0f);
+			uniformData.textureId = patternTexture.index();
 
 			// Command buffer
 			lvk::ICommandBuffer& buff = ctx->acquireCommandBuffer();

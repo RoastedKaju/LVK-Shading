@@ -9,6 +9,7 @@ layout(std430, buffer_reference) readonly buffer UniformData {
 	vec4 lightPosition;
 	vec4 cameraPosition;
 	vec4 lightingParams;
+	uint textureId;
 };
 
 layout(push_constant) uniform PushConstants {

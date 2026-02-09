@@ -5,6 +5,7 @@
 layout (location=0) in vec3 vColor;
 layout (location=1) in vec3 vNormal;
 layout (location=2) in vec3 vFragPos;
+layout (location=3) in vec2 vUV;
 
 layout (location=0) out vec4 out_FragColor;
 
@@ -32,6 +33,9 @@ void main() {
 	vec3 lightDirection = normalize(vec3(pc.lightPosition) - vFragPos);
 	float diffFactor = max(dot(normalUnit, lightDirection), 0.0);
 
+	// Store original diffuse
+	float originalDiffFactor = diffFactor;
+
 	// Calculate toon levels if the diffuse factor is positive
 	if(diffFactor > 0)
 	{
@@ -40,20 +44,25 @@ void main() {
 
 	vec3 diffuseColor = diffFactor * lightColor * diffuseIntensity;
 	
-	// Toon style Specular
+	// Specular
 	float specularStrength = pc.lightingParams.x;
 	vec3 viewDir = normalize(vec3(pc.cameraPosition) - vFragPos); // Pixel to camera
 	vec3 reflectDir = reflect(-lightDirection, normalUnit);  
 	float specFactor = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-	float toonSpecular = smoothstep(0.005, 0.01, specFactor);
-	vec3 specular = toonSpecular * lightColor * specularStrength; // Full brightness
-	
+	vec3 specular = specularStrength * specFactor * lightColor;
+
+	// Full brightness toon specular
+	//float toonSpecular = smoothstep(0.005, 0.01, specFactor);
+	//vec3 specular = toonSpecular * lightColor * specularStrength;
+
+	// Hard-Step toon specular
 	//if(specFactor > 0.0)
 	//{
 	//	specFactor = ceil(specFactor * toonColorLevels) * toonScaleFactor;
 	//}
 	//vec3 specular = specularStrength * specFactor * lightColor;
 	
+	// Constant toon specular
 	//float toonSpecular = step(0.5, specFactor);
 	//vec3 specular = specularStrength * toonSpecular * lightColor;
 
