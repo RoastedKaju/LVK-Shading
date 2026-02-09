@@ -22,6 +22,16 @@ struct Vertex
 	glm::vec2 uv;
 };
 
+// Mesh data
+struct MeshData
+{
+	std::vector<Vertex> verts;
+	std::vector<uint32_t> indices;
+	lvk::Holder<lvk::BufferHandle> vertexBuffer;
+	lvk::Holder<lvk::BufferHandle> indexBuffer;
+};
+static std::vector<MeshData> md;
+
 inline void loadModelData(const std::filesystem::path& file, std::vector<Vertex>& outVertices, std::vector<uint32_t>& outIndices)
 {
 	// For smooth shading add this flag as well aiProcess_GenSmoothNormals
@@ -90,4 +100,32 @@ inline lvk::Holder<lvk::TextureHandle> loadTexture(const std::filesystem::path& 
 	stbi_image_free((void*)image);
 
 	return texture;
+}
+
+inline void loadMesh(
+	std::unique_ptr<lvk::IContext>& ctx,
+	std::vector<Vertex>& vertData,
+	std::vector<uint32_t>& indexData,
+	lvk::Holder<lvk::BufferHandle>& vertBufHandle,
+	lvk::Holder<lvk::BufferHandle>& IndexBufHandle,
+	const std::filesystem::path& meshPath)
+{
+	loadModelData(meshPath, vertData, indexData);
+
+	// Vertex buffer
+	lvk::BufferDesc vertBufDesc{};
+	vertBufDesc.usage = lvk::BufferUsageBits_Vertex;
+	vertBufDesc.storage = lvk::StorageType_Device;
+	vertBufDesc.size = sizeof(Vertex) * vertData.size();
+	vertBufDesc.data = vertData.data();
+	vertBufDesc.debugName = "Buffer: vertex";
+	vertBufHandle = ctx->createBuffer(vertBufDesc);
+	// Index Buffer
+	lvk::BufferDesc indexBufDes{};
+	indexBufDes.usage = lvk::BufferUsageBits_Index;
+	indexBufDes.storage = lvk::StorageType_Device;
+	indexBufDes.size = sizeof(uint32_t) * indexData.size();
+	indexBufDes.data = indexData.data();
+	indexBufDes.debugName = "Buffer: index";
+	IndexBufHandle = ctx->createBuffer(indexBufDes);
 }

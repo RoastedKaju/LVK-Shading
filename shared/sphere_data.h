@@ -145,3 +145,30 @@ inline void generateIcoSphere(float radius, int subdivisions, std::vector<Vertex
 
     indices = faces;
 }
+
+inline void generateSphereBuffers(
+    std::unique_ptr<lvk::IContext>& ctx,
+    std::vector<Vertex>& vertData,
+    std::vector<uint32_t>& indexData,
+    lvk::Holder<lvk::BufferHandle>& vertBufHandle,
+    lvk::Holder<lvk::BufferHandle>& IndexBufHandle)
+{
+    // Generate UV sphere
+    generateUVSphere(0.15f, 32, 64, vertData, indexData);
+    // Vertex buffer
+    lvk::BufferDesc vertBufDesc{};
+    vertBufDesc.usage = lvk::BufferUsageBits_Vertex;
+    vertBufDesc.storage = lvk::StorageType_Device;
+    vertBufDesc.size = sizeof(Vertex) * vertData.size();
+    vertBufDesc.data = vertData.data();
+    vertBufDesc.debugName = "Buffer: vertex";
+    vertBufHandle = ctx->createBuffer(vertBufDesc);
+    // Index Buffer
+    lvk::BufferDesc indexBufDes{};
+    indexBufDes.usage = lvk::BufferUsageBits_Index;
+    indexBufDes.storage = lvk::StorageType_Device;
+    indexBufDes.size = sizeof(uint32_t) * indexData.size();
+    indexBufDes.data = indexData.data();
+    indexBufDes.debugName = "Buffer: index";
+    IndexBufHandle = ctx->createBuffer(indexBufDes);
+}

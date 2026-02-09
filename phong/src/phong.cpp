@@ -25,61 +25,6 @@ static float lightPosition[3] = { 14.0f, 7.0f, 7.0f };
 static float cameraPosition[3] = { 0.0f, 0.15f, 0.35f };
 static float specularStrength = 0.5f;
 
-void generateSphereBuffers(
-	std::unique_ptr<lvk::IContext>& ctx,
-	std::vector<Vertex>& vertData,
-	std::vector<uint32_t>& indexData,
-	lvk::Holder<lvk::BufferHandle>& vertBufHandle,
-	lvk::Holder<lvk::BufferHandle>& IndexBufHandle)
-{
-	// Generate UV sphere
-	generateUVSphere(0.15f, 32, 64, vertData, indexData);
-	// Vertex buffer
-	lvk::BufferDesc vertBufDesc{};
-	vertBufDesc.usage = lvk::BufferUsageBits_Vertex;
-	vertBufDesc.storage = lvk::StorageType_Device;
-	vertBufDesc.size = sizeof(Vertex) * vertData.size();
-	vertBufDesc.data = vertData.data();
-	vertBufDesc.debugName = "Buffer: vertex";
-	vertBufHandle = ctx->createBuffer(vertBufDesc);
-	// Index Buffer
-	lvk::BufferDesc indexBufDes{};
-	indexBufDes.usage = lvk::BufferUsageBits_Index;
-	indexBufDes.storage = lvk::StorageType_Device;
-	indexBufDes.size = sizeof(uint32_t) * indexData.size();
-	indexBufDes.data = indexData.data();
-	indexBufDes.debugName = "Buffer: index";
-	IndexBufHandle = ctx->createBuffer(indexBufDes);
-}
-
-void loadBunnyMesh(
-	std::unique_ptr<lvk::IContext>& ctx,
-	std::vector<Vertex>& vertData,
-	std::vector<uint32_t>& indexData,
-	lvk::Holder<lvk::BufferHandle>& vertBufHandle,
-	lvk::Holder<lvk::BufferHandle>& IndexBufHandle)
-{
-	//loadModelData(std::filesystem::absolute(RESOURCE_DIR"/models/monkey.glb"), vertData, indexData);
-	loadModelData(std::filesystem::absolute(RESOURCE_DIR"/models/bunny.obj"), vertData, indexData);
-
-	// Vertex buffer
-	lvk::BufferDesc vertBufDesc{};
-	vertBufDesc.usage = lvk::BufferUsageBits_Vertex;
-	vertBufDesc.storage = lvk::StorageType_Device;
-	vertBufDesc.size = sizeof(Vertex) * vertData.size();
-	vertBufDesc.data = vertData.data();
-	vertBufDesc.debugName = "Buffer: vertex";
-	vertBufHandle = ctx->createBuffer(vertBufDesc);
-	// Index Buffer
-	lvk::BufferDesc indexBufDes{};
-	indexBufDes.usage = lvk::BufferUsageBits_Index;
-	indexBufDes.storage = lvk::StorageType_Device;
-	indexBufDes.size = sizeof(uint32_t) * indexData.size();
-	indexBufDes.data = indexData.data();
-	indexBufDes.debugName = "Buffer: index";
-	IndexBufHandle = ctx->createBuffer(indexBufDes);
-}
-
 void setMouseCallbacks(GLFWwindow* window)
 {
 	glfwSetCursorPosCallback(window, [](auto* window, double x, double y) { ImGui::GetIO().MousePos = ImVec2((float)x, (float)y); });
@@ -104,12 +49,13 @@ void showUI(
 	static const char* meshNames[] =
 	{
 		"UV-Sphere",
-		"Bunny"
+		"Bunny",
+		"Teapot"
 	};
 
 	imgui.beginFrame(framebuff);
 	ImGui::Begin("Render Options", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-	ImGui::Combo("Mesh", &meshDataIndex, meshNames, 2);
+	ImGui::Combo("Mesh", &meshDataIndex, meshNames, 3);
 	ImGui::Checkbox("Show Wireframe", &showWireframe);
 	ImGui::Checkbox("Auto Rotate Mesh", &autoRotateMesh);
 	ImGui::ColorEdit3("Base Color", baseColor);
@@ -155,18 +101,11 @@ int main()
 		depthTextureDesc.debugName = "Depth Buffer";
 		lvk::Holder<lvk::TextureHandle> depthTexture = ctx->createTexture(depthTextureDesc);
 
-		// Buffers
-		// Sphere Data and Buffers
-		struct MeshData
-		{
-			std::vector<Vertex> verts;
-			std::vector<uint32_t> indices;
-			lvk::Holder<lvk::BufferHandle> vertexBuffer;
-			lvk::Holder<lvk::BufferHandle> indexBuffer;
-		} md[2];
-
+		// Load up data in buffers
+		md.resize(3);
 		generateSphereBuffers(ctx, md[0].verts, md[0].indices, md[0].vertexBuffer, md[0].indexBuffer);
-		loadBunnyMesh(ctx, md[1].verts, md[1].indices, md[1].vertexBuffer, md[1].indexBuffer);
+		loadMesh(ctx, md[1].verts, md[1].indices, md[1].vertexBuffer, md[1].indexBuffer, std::filesystem::absolute(RESOURCE_DIR"/models/bunny.obj"));
+		loadMesh(ctx, md[2].verts, md[2].indices, md[2].vertexBuffer, md[2].indexBuffer, std::filesystem::absolute(RESOURCE_DIR"/models/teapot.glb"));
 
 		// Attributes
 		const lvk::VertexInput vdesc = {
@@ -190,7 +129,6 @@ int main()
 			},
 			.inputBindings = { {.stride = sizeof(Vertex) } }
 		};
-
 
 		// Solid pipeline
 		lvk::RenderPipelineDesc pipelineDesc{};
@@ -256,6 +194,7 @@ int main()
 			const float ratio = width / static_cast<float>(height);
 
 			glm::vec3 meshPosition{ 0.0f, 0.0f, 0.0f };
+			glm::vec3 meshScale{ 1.0f, 1.0f, 1.0f };
 			// Adjust translation offset for sphere
 			if (meshDataIndex == 0)
 			{
@@ -266,7 +205,7 @@ int main()
 			model = glm::translate(model, meshPosition);
 			const float rotationSpeed = autoRotateMesh ? 15.0f : 0.0f;
 			model = glm::rotate(model, glm::radians((float)glfwGetTime() * rotationSpeed), glm::vec3(0.0f, 1.0f, 0.0f));
-			model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+			model = glm::scale(model, meshScale);
 
 			const glm::mat4 v = glm::lookAt(
 				glm::vec3(cameraPosition[0], cameraPosition[1], cameraPosition[2]),   // camera position
@@ -341,6 +280,8 @@ int main()
 			ctx->submit(buff, ctx->getCurrentSwapchainTexture());
 		}
 
+		// Clear up mesh data vector
+		md.clear();
 	}
 
 	glfwDestroyWindow(window);
