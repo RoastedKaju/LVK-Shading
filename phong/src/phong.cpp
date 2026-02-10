@@ -105,7 +105,7 @@ int main()
 		md.resize(3);
 		generateSphereBuffers(ctx, md[0].verts, md[0].indices, md[0].vertexBuffer, md[0].indexBuffer);
 		loadMesh(ctx, md[1].verts, md[1].indices, md[1].vertexBuffer, md[1].indexBuffer, std::filesystem::absolute(RESOURCE_DIR"/models/bunny.obj"));
-		loadMesh(ctx, md[2].verts, md[2].indices, md[2].vertexBuffer, md[2].indexBuffer, std::filesystem::absolute(RESOURCE_DIR"/models/teapot.glb"));
+		loadMesh(ctx, md[2].verts, md[2].indices, md[2].vertexBuffer, md[2].indexBuffer, std::filesystem::absolute(RESOURCE_DIR"/models/teapot.obj"));
 
 		// Attributes
 		const lvk::VertexInput vdesc = {
@@ -199,6 +199,10 @@ int main()
 			if (meshDataIndex == 0)
 			{
 				meshPosition = glm::vec3(0.0f, 0.1f, 0.0f);
+			}
+			if (meshDataIndex == 2) // Move teapot behind
+			{
+				meshPosition = glm::vec3(0.0f, 0.0f, -0.075f);
 			}
 
 			glm::mat4 model = glm::mat4(1.0f);          // identity
