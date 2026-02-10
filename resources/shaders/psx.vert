@@ -20,8 +20,8 @@ void main()
 	// Perspective divide
 	vec3 ndc = clip.xyz / clip.w;
 	// Snap to lower-resolution grid
-	float snapX = 320.0f;
-	float snapY = 240.0f;
+	float snapX = pc.lightingParams.y;
+	float snapY = pc.lightingParams.z;
 	ndc.xy = floor(ndc.xy * vec2(snapX, snapY)) / vec2(snapX, snapY);
 	// Rebuild clip space
 	clip.xyz = ndc * clip.w;
@@ -34,7 +34,6 @@ void main()
 	vUV = inUV;
 
 	// In gouraud we calculate the lighting inside vertex shader
-
 	// Object base color
 	vec3 objectColor = vec3(pc.color);
 	float diffuseIntensity = pc.color[3];

@@ -24,6 +24,7 @@ static float ambientStrength = 0.35f;
 static float lightPosition[3] = { 14.0f, 7.0f, 7.0f };
 static float cameraPosition[3] = { 0.0f, 0.15f, 0.35f };
 static float specularStrength = 0.0f;
+static float resolutionGrid[2] = { 320.0f, 240.0f };
 
 void setMouseCallbacks(GLFWwindow* window)
 {
@@ -64,6 +65,11 @@ void showUI(
 	ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0.0f, 1.0f);
 	ImGui::DragFloat3("Light Position", lightPosition);
 	ImGui::SliderFloat("Specular Strength", &specularStrength, 0.0f, 1.0f);
+	if(ImGui::InputFloat2("PSX-Snap Resolution", resolutionGrid))
+	{
+		resolutionGrid[0] = std::max(resolutionGrid[0], 0.1f);
+		resolutionGrid[1] = std::max(resolutionGrid[1], 0.1f);
+	}
 	ImGui::End();
 	imgui.endFrame(cmdBuff);
 }
@@ -250,7 +256,7 @@ int main()
 			uniformData.ambientColor = glm::vec4(ambientColor[0], ambientColor[1], ambientColor[2], ambientStrength);
 			uniformData.lightPosition = glm::vec4(lightPosition[0], lightPosition[1], lightPosition[2], 1.0f);
 			uniformData.cameraPosition = glm::vec4(cameraPosition[0], cameraPosition[1], cameraPosition[2], 1.0f);
-			uniformData.lightingParams = glm::vec4(specularStrength, 0.0f, 0.0f, 0.0f);
+			uniformData.lightingParams = glm::vec4(specularStrength, resolutionGrid[0], resolutionGrid[1], 0.0f);
 			uniformData.textureId = gridTexture.index();
 
 			// Command buffer
