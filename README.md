@@ -43,7 +43,7 @@ Common files are shared like model loading, sphere generation and texture loadin
 ---
 
 ## Getting Started
-- Clone the repository along with its submodules.
+- Clone the repository along with its submodules: `git clone --recursive "https://github.com/RoastedKaju/LVK-Shading.git"`
 - run command `cmake -B build` in the root folder.
 - Open the generated solution file called `Shading`.
 - Build and any of the following projects: `Phong`, `Toon`, `Gouraud`
