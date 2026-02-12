@@ -53,15 +53,15 @@ inline void generateUVSphere(float radius, unsigned int stacks, unsigned int sec
         unsigned int row2 = (i + 1) * (sectors + 1);
 
         for (unsigned int j = 0; j < sectors; ++j) {
-            // first triangle
+            // First triangle
             indices.push_back(row1 + j);
-            indices.push_back(row2 + j);
             indices.push_back(row1 + j + 1);
+            indices.push_back(row2 + j);
 
-            // second triangle
+            // Second triangle
             indices.push_back(row1 + j + 1);
-            indices.push_back(row2 + j);
             indices.push_back(row2 + j + 1);
+            indices.push_back(row2 + j);
         }
     }
 }
