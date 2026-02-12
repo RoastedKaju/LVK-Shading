@@ -12,6 +12,8 @@ Common files are shared like model loading, sphere generation and texture loadin
 - Phong Shading
 - Flat-Phong Shading
 - Gouraud Shading
+- Outline shader
+- PSX shader
 
 <p align="center">
   <img src="docs/overview.jpg">
@@ -23,12 +25,22 @@ Common files are shared like model loading, sphere generation and texture loadin
 - Saperate projects for ease in code mobility.
 - Shared header only function library.
 
+### Outline
+Comes with toggle outline option and outline thickness, is used with toon shader but you can use the outline shader pretty much anywhere as it comes in its own shader files, It is made using inverted hull technique so make sure all your meshes have CCW winding order.
 <p align="center">
-  <img src="docs/wireframe.jpg" width=1200>
+  <img src="docs/outline.jpg" width=1200>
 </p>
 
+### Flat
+It is a variation of Phong shading, all it does is flat out the normals.
 <p align="center">
   <img src="docs/options.jpg" width=1200>
+</p>
+
+### PSX
+PS1 style shader with low precision, giving the iconic wobbly look of its time. Comes with the option to define the lower grid resolution.
+<p align="center">
+  <img src="docs/psx.gif" width=1200>
 </p>
 
 ---
