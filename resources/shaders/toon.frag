@@ -12,6 +12,11 @@ layout (location=0) out vec4 out_FragColor;
 layout (constant_id = 0) const bool isWireframe = false;
 
 void main() {
+	if (isWireframe) {
+		out_FragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		return;
+	}
+
 	// Toon shading params
 	const int toonColorLevels = int(pc.lightingParams.y);
 	const float toonScaleFactor = 1.0f / toonColorLevels;
@@ -75,6 +80,5 @@ void main() {
 	
 	// Result
 	vec4 finalColor = vec4(objectColor, 1.0f) * vec4(ambientColor + diffuseColor + specular + rimColor, 1.0f);
-	
-	out_FragColor = isWireframe ? vec4(0.0f, 0.0f, 0.0f, 1.0f) : finalColor;
+	out_FragColor = finalColor;
 };

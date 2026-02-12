@@ -5,8 +5,8 @@ set(SHADER_DIR "${CMAKE_SOURCE_DIR}/resources/shaders")
 file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 # Shader files
-set(SHADER_FILES "${SHADER_DIR}/toon.frag" "${SHADER_DIR}/toon.vert" "${SHADER_DIR}/common.sp")
-source_group("Shaders" FILES "${SHADER_DIR}/toon.frag" "${SHADER_DIR}/toon.vert" "${SHADER_DIR}/common.sp")
+set(SHADER_FILES "${SHADER_DIR}/toon.frag" "${SHADER_DIR}/toon.vert" "${SHADER_DIR}/outline.vert" "${SHADER_DIR}/outline.frag" "${SHADER_DIR}/common.sp")
+source_group("Shaders" FILES "${SHADER_DIR}/toon.frag" "${SHADER_DIR}/toon.vert" "${SHADER_DIR}/outline.vert" "${SHADER_DIR}/outline.frag" "${SHADER_DIR}/common.sp")
 # Shared files
 file(GLOB_RECURSE SHARED_FILES "${CMAKE_SOURCE_DIR}/shared/*.h")
 source_group("Shared" FILES ${SHARED_FILES})

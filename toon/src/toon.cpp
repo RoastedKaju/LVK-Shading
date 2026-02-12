@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <string>
 
+#include <vulkan/vulkan.h>
 #include <lvk/LVK.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -15,6 +16,8 @@
 #include "model_loader.h"
 
 static int meshDataIndex = 0;
+static bool showOutline = true;
+static float outlineThickness = 0.002f;
 static bool showWireframe = false;
 static bool autoRotateMesh = true;
 static float baseColor[3] = { 0.8f, 0.5f, 0.0f };
@@ -58,6 +61,8 @@ void showUI(
 	imgui.beginFrame(framebuff);
 	ImGui::Begin("Render Options", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Combo("Mesh", &meshDataIndex, meshNames, 3);
+	ImGui::Checkbox("Show Outline", &showOutline);
+	ImGui::SliderFloat("Outline Thickness", &outlineThickness, 0.001f, 0.015f);
 	ImGui::Checkbox("Show Wireframe", &showWireframe);
 	ImGui::Checkbox("Auto Rotate Mesh", &autoRotateMesh);
 	ImGui::ColorEdit3("Base Color", baseColor);
@@ -84,8 +89,8 @@ int main()
 	GLFWwindow* window = lvk::initWindow("Shading", width, height, false);
 
 	{
-		// Context
-		std::unique_ptr<lvk::IContext> ctx = lvk::createVulkanContextWithSwapchain(window, width, height, {});
+		lvk::ContextConfig ctxConfig{};
+		std::unique_ptr<lvk::IContext> ctx = lvk::createVulkanContextWithSwapchain(window, width, height, ctxConfig);
 
 		// UI context
 		std::unique_ptr<lvk::ImGuiRenderer> imguiCtx = std::make_unique<lvk::ImGuiRenderer>(*ctx, window, RESOURCE_DIR"/fonts/Terminal.ttf", 13.0f);
@@ -95,6 +100,8 @@ int main()
 		// Shaders
 		lvk::Holder<lvk::ShaderModuleHandle> vert = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/toon.vert"));
 		lvk::Holder<lvk::ShaderModuleHandle> frag = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/toon.frag"));
+		lvk::Holder<lvk::ShaderModuleHandle> outlineVert = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/outline.vert"));
+		lvk::Holder<lvk::ShaderModuleHandle> outlineFrag = loadShaderModule(ctx, std::filesystem::absolute(SHADER_DIR"/outline.frag"));
 
 		// Depth texture
 		lvk::TextureDesc depthTextureDesc{};
@@ -166,8 +173,20 @@ int main()
 
 		lvk::Holder<lvk::RenderPipelineHandle> wireframePipeline = ctx->createRenderPipeline(wireframePipelineDesc);
 
+		// Outline pipeline
+		lvk::RenderPipelineDesc outlinePipelineDesc{};
+		outlinePipelineDesc.vertexInput = vdesc;
+		outlinePipelineDesc.smVert = outlineVert;
+		outlinePipelineDesc.smFrag = outlineFrag;
+		outlinePipelineDesc.color[0].format = ctx->getSwapchainFormat();
+		outlinePipelineDesc.cullMode = lvk::CullMode_Front; // Cull mode front so we only see back faces of our duplicate outline mesh
+		outlinePipelineDesc.depthFormat = ctx->getFormat(depthTexture);
+
+		lvk::Holder<lvk::RenderPipelineHandle> outlinePipeline = ctx->createRenderPipeline(outlinePipelineDesc);
+
 		LVK_ASSERT(soildPipeline.valid());
 		LVK_ASSERT(wireframePipeline.valid());
+		LVK_ASSERT(outlinePipeline.valid());
 
 		// Uniform Buffer
 		struct UniformData
@@ -208,7 +227,7 @@ int main()
 			{
 				meshPosition = glm::vec3(0.0f, 0.1f, 0.0f);
 			}
-			if (meshDataIndex == 2) // Move teapot behind
+			if (meshDataIndex == 2) // Teapot is too big so move it a bit in negative z-axis
 			{
 				meshPosition = glm::vec3(0.0f, 0.0f, -0.075f);
 			}
@@ -228,9 +247,9 @@ int main()
 
 			lvk::RenderPass renderPass;
 			renderPass.color[0].loadOp = lvk::LoadOp_Clear;
-			renderPass.color[0].clearColor.float32[0] = 0.0f;
-			renderPass.color[0].clearColor.float32[1] = 0.0f;
-			renderPass.color[0].clearColor.float32[2] = 0.0f;
+			renderPass.color[0].clearColor.float32[0] = 0.8f;
+			renderPass.color[0].clearColor.float32[1] = 0.8f;
+			renderPass.color[0].clearColor.float32[2] = 0.8f;
 			renderPass.color[0].clearColor.float32[3] = 1.0f;
 			renderPass.depth.loadOp = lvk::LoadOp_Clear; // Depth
 			renderPass.depth.clearDepth = 1.0f;
@@ -254,7 +273,7 @@ int main()
 			uniformData.ambientColor = glm::vec4(ambientColor[0], ambientColor[1], ambientColor[2], ambientStrength);
 			uniformData.lightPosition = glm::vec4(lightPosition[0], lightPosition[1], lightPosition[2], 1.0f);
 			uniformData.cameraPosition = glm::vec4(cameraPosition[0], cameraPosition[1], cameraPosition[2], 1.0f);
-			uniformData.lightingParams = glm::vec4(specularStrength, (float)toonColorLevels, rimLightPower, 0.0f);
+			uniformData.lightingParams = glm::vec4(specularStrength, (float)toonColorLevels, rimLightPower, outlineThickness);
 			uniformData.textureId = patternTexture.index();
 
 			// Command buffer
@@ -270,7 +289,6 @@ int main()
 				// Bind solid pipeline
 				buff.cmdBindRenderPipeline(soildPipeline);
 				buff.cmdBindDepthState({ .compareOp = lvk::CompareOp_Less, .isDepthWriteEnabled = true });
-				//buff.cmdPushConstants(pc);
 				buff.cmdPushConstants(ctx->gpuAddress(uniformBuffer));
 				buff.cmdDrawIndexed((uint32_t)md[meshDataIndex].indices.size());
 
@@ -280,6 +298,15 @@ int main()
 					buff.cmdBindRenderPipeline(wireframePipeline);
 					buff.cmdSetDepthBiasEnable(true);
 					buff.cmdSetDepthBias(0.0f, -1.0f, 0.0f);
+					buff.cmdDrawIndexed((uint32_t)md[meshDataIndex].indices.size());
+				}
+
+				// Bind outline pipeline
+				if (showOutline)
+				{
+					buff.cmdBindRenderPipeline(outlinePipeline);
+					buff.cmdSetDepthBiasEnable(false);
+					buff.cmdBindDepthState({ .compareOp = lvk::CompareOp_LessEqual, .isDepthWriteEnabled = false });
 					buff.cmdDrawIndexed((uint32_t)md[meshDataIndex].indices.size());
 				}
 
