@@ -16,19 +16,22 @@ layout (constant_id = 0) const bool isWireframe = false;
 void main()
 {
 	// PSX has low precision vertices snap to coarse grid in screen space
-	vec4 clip = pc.proj * pc.view * pc.model * vec4(inPos, 1.0f);
-	// Perspective divide
-	vec3 ndc = clip.xyz / clip.w;
-	// Snap to lower-resolution grid
-	float snapX = pc.lightingParams.y;
-	float snapY = pc.lightingParams.z;
-	ndc.xy = floor(ndc.xy * vec2(snapX, snapY)) / vec2(snapX, snapY);
-	// Rebuild clip space
-	clip.xyz = ndc * clip.w;
+	vec4 clip = pc.proj * pc.view * pc.model * vec4(inPos, 1.0);
+	
+	// Clip space -> NDC conversion
+	vec2 ndc = clip.xy / clip.w;
 
+	// Scale upto screen resolution
+	vec2 screenRes = vec2(pc.lightingParams.y, pc.lightingParams.z);
+	vec2 screenPos = ((ndc * 0.5) + 0.5) * screenRes;
+	screenPos = floor(screenPos + 0.5); // round to nearest integer
+	vec2 snappedNdc = ((screenPos / screenRes) - 0.5) * 2.0; // scale back down to -1..1
+
+	// Convert snapped NDC back to clip-space
+	clip.xy = snappedNdc * clip.w;
 	gl_Position = clip;
 
-	vColor = isWireframe ? vec3(0.0f) : inPos.xyz; // Will be overridden by Gouraud
+	vColor = isWireframe ? vec3(0.0f) : inPos.xyz; // will be overridden by Gouraud
 	vNormal = mat3(transpose(inverse(pc.model))) * inNormal; 
 	vFragPos = vec3(pc.model * vec4(inPos, 1.0f));
 	vUV = inUV;
