@@ -13,6 +13,11 @@
 #include <glm/ext.hpp>
 
 #include <stb/stb_image.h>
+#include <stb/stb_image_write.h>
+
+#include "bitmap.h"
+#include "utils_math.h"
+#include "utils_cubemap.h"
 
 
 struct Vertex
@@ -100,6 +105,38 @@ inline lvk::Holder<lvk::TextureHandle> loadTexture(const std::filesystem::path& 
 	stbi_image_free((void*)image);
 
 	return texture;
+}
+
+inline lvk::Holder<lvk::TextureHandle> loadCubemap(const std::filesystem::path& filePath, std::unique_ptr<lvk::IContext>& ctx)
+{
+	lvk::TextureDesc cubemapTextureDesc;
+	lvk::Holder<lvk::TextureHandle> cubemapTexture;
+
+	// load HDR image
+	int w, h;
+	const float* img = stbi_loadf(RESOURCE_DIR"/textures/dusk.hdr", &w, &h, nullptr, 4);
+	assert(img);
+
+	// Covert HDR into 6-faced vertical cross image
+	Bitmap in(w, h, 4, eBitmapFormat_Float, img);
+	Bitmap out = cubemap::convertEquirectangularMapToVerticalCross(in);
+	stbi_image_free((void*)img);
+
+	stbi_write_hdr(".cache/screenshot.hdr", out.w_, out.h_, out.comp_, (const float*)out.data_.data());
+
+	// Extract images out of vertical cross
+	Bitmap finalCubemap = cubemap::convertVerticalCrossToCubeMapFaces(out);
+
+	// Fill in the desc data
+	cubemapTextureDesc.type = lvk::TextureType_Cube;
+	cubemapTextureDesc.format = lvk::Format_RGBA_F32;
+	cubemapTextureDesc.dimensions = { (uint32_t)finalCubemap.w_, (uint32_t)finalCubemap.h_ };
+	cubemapTextureDesc.usage = lvk::TextureUsageBits_Sampled;
+	cubemapTextureDesc.data = finalCubemap.data_.data();
+	cubemapTextureDesc.debugName = "Cubemap Skybox";
+	cubemapTexture = ctx->createTexture(cubemapTextureDesc);
+
+	return cubemapTexture;
 }
 
 inline void loadMesh(

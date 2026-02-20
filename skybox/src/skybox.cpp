@@ -17,6 +17,7 @@
 #include "model_loader.h"
 #include "bitmap.h"
 #include "utils_cubemap.h"
+#include "camera.h"
 
 static int meshDataIndex = 0;
 static bool showWireframe = false;
@@ -26,7 +27,7 @@ static float diffuseIntensity = 1.0f;
 static float ambientColor[3] = { 1.0f , 1.0f , 1.0f };
 static float ambientStrength = 0.1f;
 static float lightPosition[3] = { 14.0f, 7.0f, 7.0f };
-static float cameraPosition[3] = { 0.0f, 0.00f, 0.75f };
+//static float cameraPosition[3] = { 0.0f, 0.00f, 0.75f };
 static float specularStrength = 0.5f;
 
 void setMouseCallbacks(GLFWwindow* window)
@@ -113,29 +114,7 @@ int main()
 		loadMesh(ctx, md[1].verts, md[1].indices, md[1].vertexBuffer, md[1].indexBuffer, std::filesystem::absolute(RESOURCE_DIR"/models/bunny.obj"));
 		loadMesh(ctx, md[2].verts, md[2].indices, md[2].vertexBuffer, md[2].indexBuffer, std::filesystem::absolute(RESOURCE_DIR"/models/teapot.obj"));
 
-		lvk::TextureDesc cubemapTextureDesc;
-		lvk::Holder<lvk::TextureHandle> cubemapTexture;
-		{
-			// Convert HDR image using bitmap helpers
-			int w, h;
-			const float* img = stbi_loadf(RESOURCE_DIR"/textures/dusk.hdr", &w, &h, nullptr, 4);
-			Bitmap in(w, h, 4, eBitmapFormat_Float, img);
-			Bitmap out = cubemap::convertEquirectangularMapToVerticalCross(in);
-			stbi_image_free((void*)img);
-
-			stbi_write_hdr(".cache/screenshot.hdr", out.w_, out.h_, out.comp_, (const float*)out.data_.data());
-
-			Bitmap finalCubemap = cubemap::convertVerticalCrossToCubeMapFaces(out);
-
-			// Fill in the desc data
-			cubemapTextureDesc.type = lvk::TextureType_Cube;
-			cubemapTextureDesc.format = lvk::Format_RGBA_F32;
-			cubemapTextureDesc.dimensions = { (uint32_t)finalCubemap.w_, (uint32_t)finalCubemap.h_ };
-			cubemapTextureDesc.usage = lvk::TextureUsageBits_Sampled;
-			cubemapTextureDesc.data = finalCubemap.data_.data();
-			cubemapTextureDesc.debugName = "Cubemap Skybox";
-			cubemapTexture = ctx->createTexture(cubemapTextureDesc);
-		}
+		lvk::Holder<lvk::TextureHandle> cubemapTexture = loadCubemap(std::filesystem::absolute(RESOURCE_DIR"/textures/dusk.hdr"), ctx);
 
 		// Attributes
 		const lvk::VertexInput vdesc = {
@@ -222,16 +201,29 @@ int main()
 			  .debugName = "Buffer: per-frame" },
 			nullptr);
 
+		// Camera Object
+		FreeCamera camera{window, glm::vec3(0.0f, 0.00f, 0.75f), glm::vec3(0.0f, 0.1f, 0.0f)};
+
+		double timeStamp = glfwGetTime();
+		float deltaSeconds = 0.0f;
+
 		// Render Loop
 		while (!glfwWindowShouldClose(window))
 		{
 			glfwPollEvents();
+			
+			const double newTimeStamp = glfwGetTime();
+			deltaSeconds = static_cast<float>(newTimeStamp - timeStamp);
+			timeStamp = newTimeStamp;
+
 			glfwGetFramebufferSize(window, &width, &height);
 
 			if (!width || !height)
 				continue;
 
 			const float ratio = width / static_cast<float>(height);
+			camera.setAspectRatio(ratio);
+			camera.handleInput(window, deltaSeconds);
 
 			glm::vec3 meshPosition{ 0.0f, 0.0f, 0.0f };
 			glm::vec3 meshScale{ 1.0f, 1.0f, 1.0f };
@@ -251,12 +243,12 @@ int main()
 			model = glm::rotate(model, glm::radians((float)glfwGetTime() * rotationSpeed), glm::vec3(0.0f, 1.0f, 0.0f));
 			model = glm::scale(model, meshScale);
 
-			const glm::mat4 v = glm::lookAt(
-				glm::vec3(cameraPosition[0], cameraPosition[1], cameraPosition[2]),   // camera position
-				glm::vec3(0.0f, 0.1f, 0.0f),   // look at model
-				glm::vec3(0.0f, 1.0f, 0.0f)    // up direction
-			);
-			const glm::mat4 p = glm::perspective(45.0f, ratio, 0.1f, 1000.0f);
+			//const glm::mat4 v = glm::lookAt(
+			//	glm::vec3(cameraPosition[0], cameraPosition[1], cameraPosition[2]),   // camera position
+			//	glm::vec3(0.0f, 0.1f, 0.0f),   // look at model
+			//	glm::vec3(0.0f, 1.0f, 0.0f)    // up direction
+			//);
+			//const glm::mat4 p = glm::perspective(45.0f, ratio, 0.1f, 1000.0f);
 
 			lvk::RenderPass renderPass;
 			renderPass.color[0].loadOp = lvk::LoadOp_Clear;
@@ -273,19 +265,19 @@ int main()
 			framebuffer.depthStencil.texture = depthTexture;
 
 			// Perframe data
-			const struct PerFrameData
-			{
-				glm::mat4 mvp;
-			} pc = { .mvp = p * v * model };
+			//const struct PerFrameData
+			//{
+			//	glm::mat4 mvp;
+			//} pc = { .mvp = camera.getProjectionMatrix() * camera.getViewMatrix() * model };
 			// Uniform version
 			UniformData uniformData{};
 			uniformData.color = glm::vec4(baseColor[0], baseColor[1], baseColor[2], diffuseIntensity);
 			uniformData.model = model;
-			uniformData.proj = p;
-			uniformData.view = v;
+			uniformData.proj = camera.getProjectionMatrix();
+			uniformData.view = camera.getViewMatrix();
 			uniformData.ambientColor = glm::vec4(ambientColor[0], ambientColor[1], ambientColor[2], ambientStrength);
 			uniformData.lightPosition = glm::vec4(lightPosition[0], lightPosition[1], lightPosition[2], 1.0f);
-			uniformData.cameraPosition = glm::vec4(cameraPosition[0], cameraPosition[1], cameraPosition[2], 1.0f);
+			uniformData.cameraPosition = glm::vec4(camera.getCameraPosition(), 1.0f);
 			uniformData.lightingParams = glm::vec4(specularStrength, 0.0f, 0.0f, 0.0f);
 			uniformData.textureID = cubemapTexture.index();
 
