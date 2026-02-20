@@ -15,4 +15,5 @@ add_subdirectory("gouraud")
 add_subdirectory("flat")
 add_subdirectory("toon")
 add_subdirectory("psx")
+add_subdirectory("skybox")
 
