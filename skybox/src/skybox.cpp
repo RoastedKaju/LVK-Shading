@@ -70,6 +70,12 @@ void showUI(
 	ImGui::DragFloat3("Light Position", lightPosition);
 	ImGui::SliderFloat("Specular Strength", &specularStrength, 0.0f, 1.0f);
 	ImGui::End();
+	ImGui::SetNextWindowPos(ImVec2(200.0f, 800.0f), ImGuiCond_FirstUseEver);
+	if (ImGui::Begin("Hint", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::TextUnformatted("Press Left-Ctrl to toggle cursor.");
+	}
+	ImGui::End();
 	imgui.endFrame(cmdBuff);
 }
 
@@ -243,13 +249,6 @@ int main()
 			model = glm::rotate(model, glm::radians((float)glfwGetTime() * rotationSpeed), glm::vec3(0.0f, 1.0f, 0.0f));
 			model = glm::scale(model, meshScale);
 
-			//const glm::mat4 v = glm::lookAt(
-			//	glm::vec3(cameraPosition[0], cameraPosition[1], cameraPosition[2]),   // camera position
-			//	glm::vec3(0.0f, 0.1f, 0.0f),   // look at model
-			//	glm::vec3(0.0f, 1.0f, 0.0f)    // up direction
-			//);
-			//const glm::mat4 p = glm::perspective(45.0f, ratio, 0.1f, 1000.0f);
-
 			lvk::RenderPass renderPass;
 			renderPass.color[0].loadOp = lvk::LoadOp_Clear;
 			renderPass.color[0].clearColor.float32[0] = 0.0f;
@@ -264,12 +263,7 @@ int main()
 			framebuffer.color[0].texture = ctx->getCurrentSwapchainTexture();
 			framebuffer.depthStencil.texture = depthTexture;
 
-			// Perframe data
-			//const struct PerFrameData
-			//{
-			//	glm::mat4 mvp;
-			//} pc = { .mvp = camera.getProjectionMatrix() * camera.getViewMatrix() * model };
-			// Uniform version
+			// Uniform version of per-frame data
 			UniformData uniformData{};
 			uniformData.color = glm::vec4(baseColor[0], baseColor[1], baseColor[2], diffuseIntensity);
 			uniformData.model = model;

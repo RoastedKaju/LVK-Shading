@@ -76,6 +76,9 @@ class FreeCamera : public Camera
 public:
 	FreeCamera(GLFWwindow* window, const glm::vec3& position, const glm::vec3& target) : Camera(position, target)
 	{
+		yawDesired_ = yaw_;
+		pitchDesired_ = pitch_;
+
 		glfwSetWindowUserPointer(window, this);
 		glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 			{
@@ -124,10 +127,14 @@ public:
 
 		if (!cursorVisible_)
 		{
-			yaw_ += xOffset;
-			pitch_ += yOffset;
+			yawDesired_ += xOffset;
+			pitchDesired_ += yOffset;
 		}
-		pitch_ = glm::clamp(pitch_, -89.0f, 89.0f); // prevent flipping
+		pitchDesired_ = glm::clamp(pitchDesired_, -89.0f, 89.0f); // prevent flipping
+
+		// Smoothly interpolate current toward desired:
+		yaw_ += (yawDesired_ - yaw_) * damping_ * deltaTime;
+		pitch_ += (pitchDesired_ - pitch_) * damping_ * deltaTime;
 
 		updateVectors();
 	}
@@ -139,4 +146,7 @@ protected:
 	float lastMouseX_ = 0.0f;
 	float lastMouseY_ = 0.0f;
 	bool cursorVisible_ = true;
+	float yawDesired_ = 0.0f;
+	float pitchDesired_ = 0.0f;
+	float damping_ = 15.0f;
 };
