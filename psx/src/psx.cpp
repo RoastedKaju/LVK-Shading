@@ -242,12 +242,7 @@ int main()
 			framebuffer.color[0].texture = ctx->getCurrentSwapchainTexture();
 			framebuffer.depthStencil.texture = depthTexture;
 
-			// Perframe data
-			const struct PerFrameData
-			{
-				glm::mat4 mvp;
-			} pc = { .mvp = p * v * model };
-			// Uniform version
+			// Uniform
 			UniformData uniformData{};
 			uniformData.color = glm::vec4(baseColor[0], baseColor[1], baseColor[2], diffuseIntensity);
 			uniformData.model = model;
