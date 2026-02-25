@@ -99,7 +99,6 @@ inline lvk::Holder<lvk::TextureHandle> loadTexture(const std::filesystem::path& 
 			.usage = lvk::TextureUsageBits_Sampled,
 			.data = image,
 			.debugName = "03_STB.jpg"
-
 		});
 
 	stbi_image_free((void*)image);

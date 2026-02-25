@@ -80,11 +80,10 @@ int main()
 	configInfo.threadNames = false;
 	minilog::initialize(nullptr, configInfo);
 
-	int width = -95;
-	int height = -90;
+	int width = -90;
+	int height = -95;
 
 	GLFWwindow* window = lvk::initWindow("Shading", width, height, false);
-
 	{
 		// Context
 		std::unique_ptr<lvk::IContext> ctx = lvk::createVulkanContextWithSwapchain(window, width, height, {});
@@ -230,9 +229,9 @@ int main()
 
 			lvk::RenderPass renderPass;
 			renderPass.color[0].loadOp = lvk::LoadOp_Clear;
-			renderPass.color[0].clearColor.float32[0] = 0.0f;
-			renderPass.color[0].clearColor.float32[1] = 0.0f;
-			renderPass.color[0].clearColor.float32[2] = 0.0f;
+			renderPass.color[0].clearColor.float32[0] = 0.75f;
+			renderPass.color[0].clearColor.float32[1] = 0.75f;
+			renderPass.color[0].clearColor.float32[2] = 0.75f;
 			renderPass.color[0].clearColor.float32[3] = 1.0f;
 			renderPass.depth.loadOp = lvk::LoadOp_Clear; // Depth
 			renderPass.depth.clearDepth = 1.0f;

@@ -9,7 +9,8 @@ layout (location=2) in vec2 inUV;
 layout (location=0) out vec3 vColor;
 layout (location=1) out vec3 vNormal;
 layout (location=2) out vec3 vFragPos;
-layout (location=3) out vec2 vUV;
+// For PS1 style texture swimming
+layout (location=3) noperspective out vec2 vUV;
 
 layout (constant_id = 0) const bool isWireframe = false;
 
