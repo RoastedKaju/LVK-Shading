@@ -24,9 +24,11 @@ static float ambientStrength = 0.35f;
 static float lightPosition[3] = { 14.0f, 7.0f, 7.0f };
 static float cameraPosition[3] = { 0.0f, 0.15f, 0.35f };
 static float specularStrength = 0.0f;
-static float resolutionGrid[2] = { 320.0f, 240.0f };
+static float resolutionScale = 1.0f;
+static float colorBandingStrength = 1.0f;
+static int32_t ditherScale = 6;
 
-void setMouseCallbacks(GLFWwindow* window)
+static void setMouseCallbacks(GLFWwindow* window)
 {
 	glfwSetCursorPosCallback(window, [](auto* window, double x, double y) { ImGui::GetIO().MousePos = ImVec2((float)x, (float)y); });
 	glfwSetMouseButtonCallback(window, [](auto* window, int button, int action, int mods) {
@@ -41,7 +43,7 @@ void setMouseCallbacks(GLFWwindow* window)
 		});
 }
 
-void showUI(
+static void showUI(
 	lvk::ImGuiRenderer& imgui,
 	lvk::Framebuffer& framebuff,
 	lvk::ICommandBuffer& cmdBuff
@@ -65,11 +67,9 @@ void showUI(
 	ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0.0f, 1.0f);
 	ImGui::DragFloat3("Light Position", lightPosition);
 	ImGui::SliderFloat("Specular Strength", &specularStrength, 0.0f, 1.0f);
-	if(ImGui::InputFloat2("PSX-Snap Resolution", resolutionGrid))
-	{
-		resolutionGrid[0] = std::max(resolutionGrid[0], 0.1f);
-		resolutionGrid[1] = std::max(resolutionGrid[1], 0.1f);
-	}
+	ImGui::SliderFloat("PSX-Snap Resolution", &resolutionScale, 0.1f, 3.0f);
+	ImGui::SliderFloat("Color Banding Strength", &colorBandingStrength, 1.0f, 10.0f);
+	ImGui::SliderInt("Dither Scale", &ditherScale, 1, 10);
 	ImGui::End();
 	imgui.endFrame(cmdBuff);
 }
@@ -82,6 +82,7 @@ int main()
 
 	int width = -90;
 	int height = -95;
+
 
 	GLFWwindow* window = lvk::initWindow("Shading", width, height, false);
 	{
@@ -250,7 +251,7 @@ int main()
 			uniformData.ambientColor = glm::vec4(ambientColor[0], ambientColor[1], ambientColor[2], ambientStrength);
 			uniformData.lightPosition = glm::vec4(lightPosition[0], lightPosition[1], lightPosition[2], 1.0f);
 			uniformData.cameraPosition = glm::vec4(cameraPosition[0], cameraPosition[1], cameraPosition[2], 1.0f);
-			uniformData.lightingParams = glm::vec4(specularStrength, resolutionGrid[0], resolutionGrid[1], 0.0f);
+			uniformData.lightingParams = glm::vec4(specularStrength, resolutionScale, (float)ditherScale, colorBandingStrength);
 			uniformData.textureId = gridTexture.index();
 
 			// Command buffer

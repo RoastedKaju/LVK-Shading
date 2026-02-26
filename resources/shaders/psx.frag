@@ -26,12 +26,14 @@ void main() {
 
 	// Calculate dither offset based on screen-space coordinates
 	// divide by higer value to scale the dither pattern (Default: 1/None)
-	int x = (int(gl_FragCoord.x) / 6) % 4;
-	int y = (int(gl_FragCoord.y) / 6) % 4;
+	const int ditherScale = int(pc.lightingParams.z);
+	int x = (int(gl_FragCoord.x) / ditherScale) % 4;
+	int y = (int(gl_FragCoord.y) / ditherScale) % 4;
 	float ditherValue = ditherTable[y * 4 + x];
 
 	// for the color banding to appear increase the divide amount (Default: 32.0)
-	float ditherStrength = 1.0 / 64.0;
+	const float colorBandingStrength = pc.lightingParams.w;
+	float ditherStrength = 1.0 / (32.0 * colorBandingStrength);
 	vec3 ditheredColor = rawColor + (ditherValue / 16.0 - 0.5) * ditherStrength;
 
 	// 5-Bit color (PSX standard)

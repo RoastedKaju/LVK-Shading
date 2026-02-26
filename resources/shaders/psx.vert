@@ -18,15 +18,15 @@ void main()
 {
 	// PSX has low precision vertices snap to coarse grid in screen space
 	vec4 clip = pc.proj * pc.view * pc.model * vec4(inPos, 1.0);
+
+	const float resScale =  pc.lightingParams.y;
+	vec2 targetRes = vec2(320.0, 240.0) * resScale; // Target PS1 resolution
 	
 	// Clip space -> NDC conversion
 	vec2 ndc = clip.xy / clip.w;
 
-	// Scale upto screen resolution
-	vec2 screenRes = vec2(pc.lightingParams.y, pc.lightingParams.z);
-	vec2 screenPos = ((ndc * 0.5) + 0.5) * screenRes;
-	screenPos = floor(screenPos + 0.5); // round to nearest integer
-	vec2 snappedNdc = ((screenPos / screenRes) - 0.5) * 2.0; // scale back down to -1..1
+	vec2 gridPos = floor(ndc * (targetRes * 0.5) + 0.5);
+	vec2 snappedNdc = gridPos / (targetRes * 0.5);
 
 	// Convert snapped NDC back to clip-space
 	clip.xy = snappedNdc * clip.w;
