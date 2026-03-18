@@ -16,4 +16,5 @@ add_subdirectory("flat")
 add_subdirectory("toon")
 add_subdirectory("psx")
 add_subdirectory("skybox")
+add_subdirectory("post_process")
 
