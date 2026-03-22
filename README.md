@@ -14,6 +14,7 @@ Common files are shared like model loading, sphere generation and texture loadin
 - Gouraud Shading
 - Outline shader
 - PSX shader
+- Post Process shader
 
 <p align="center">
   <img src="docs/overview.jpg">
@@ -24,6 +25,9 @@ Common files are shared like model loading, sphere generation and texture loadin
 - Comes with different Meshes to show off shading.
 - Saperate projects for ease in code mobility.
 - Shared header only function library.
+- Camera controls for Skybox Example.
+- Post process render pass.
+- Following Post-Processes: Filmgrain, Vignette, Scanlines, Chromatic aberration, Gamma correction
 
 ### Outline
 Comes with toggle outline option and outline thickness, is used with toon shader but you can use the outline shader pretty much anywhere as it comes in its own shader files, It is made using inverted hull technique so make sure all your meshes have CCW winding order.
@@ -41,6 +45,18 @@ It is a variation of Phong shading, all it does is flat out the normals.
 PS1 style shader with low precision, giving the iconic wobbly look of its time. Comes with the option to define the lower grid resolution.
 <p align="center">
   <img src="docs/psx.gif" width=1200>
+</p>
+
+### Skybox
+Skybox example contains a fully moveable enviorment with a cubemap, utility functions include the ability to extract textures from and HDR image.
+<p align="center">
+  <img src="docs/skybox.jpg" width=1200>
+</p>
+
+### Post-Process
+Post process example renders first to an offscreen texture and then applies a 2nd Render pass. The following effects are implemented: Filmgrain, Vignette, Scanlines, Chromatic aberration, Gamma correction.
+<p align="center">
+  <img src="docs/post_process.jpg" width=1200>
 </p>
 
 ---
