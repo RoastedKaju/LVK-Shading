@@ -26,6 +26,10 @@ void main() {
 
     // Contrast & brightness
 
+    // Scanlines
+    float scanline = sin(vUV.y * 800.0 * 3.14159); 
+    color.rgb *= 0.9 + 0.1 * scanline; 
+
     // Vignette
     float vignette = 1.0 - dot(centered, centered) * pc.lightingParams[1];
     vignette = clamp(vignette, 0.0, 1.0);
@@ -33,6 +37,8 @@ void main() {
     // Film grain
     float noise = fract(sin(dot(vUV, vec2(12.9898, 78.233) + pc.lightingParams[3])) * 43758.5453);
     color.rgb += (noise - 0.5) * 0.08;
+
+    // Simple Bloom
 
     // Gamma correction
     color.rgb = pow(color.rgb, vec3(1.0 / 2.2));
