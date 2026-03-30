@@ -13,6 +13,7 @@
 #include "shader_processor.h"
 #include "sphere_data.h"
 #include "model_loader.h"
+#include "gold_style.h"
 
 static int meshDataIndex = 0;
 static bool showWireframe = false;
@@ -85,6 +86,7 @@ int main()
 
 		// UI context
 		std::unique_ptr<lvk::ImGuiRenderer> imguiCtx = std::make_unique<lvk::ImGuiRenderer>(*ctx, window, RESOURCE_DIR"/fonts/Terminal.ttf", 13.0f);
+		SetupImGuiStyle();
 
 		setMouseCallbacks(window);
 
