@@ -48,7 +48,7 @@ PS1 style shader with low precision, giving the iconic wobbly look of its time. 
 </p>
 
 ### Skybox
-Skybox example contains a fully moveable enviorment with a cubemap, utility functions include the ability to extract textures from and HDR image.
+Skybox example contains a fully moveable enviorment with a cubemap, utility functions include the ability to extract textures from HDR image to generate 6 images for cubemap.
 <p align="center">
   <img src="docs/skybox.jpg" width=1200>
 </p>
