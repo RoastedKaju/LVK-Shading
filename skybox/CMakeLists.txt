@@ -6,7 +6,7 @@ file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h" "${CMAKE_CURRE
 
 # Shader files
 set(SHADER_FILES "${SHADER_DIR}/skybox.frag" "${SHADER_DIR}/skybox.vert" "${SHADER_DIR}/phong.frag" "${SHADER_DIR}/phong.vert" "${SHADER_DIR}/common.sp")
-source_group("Shaders" FILES "${SHADER_DIR}/skybox.frag" "${SHADER_DIR}/skybox.vert" "${SHADER_DIR}/phong.frag" "${SHADER_DIR}/phong.vert" "${SHADER_DIR}/common.sp")
+source_group("Shaders" FILES "${SHADER_FILES}")
 # Shared files
 file(GLOB_RECURSE SHARED_FILES "${CMAKE_SOURCE_DIR}/shared/*.h")
 source_group("Shared" FILES ${SHARED_FILES})
@@ -17,7 +17,7 @@ add_executable(${MODULE_NAME} ${SRC_FILES} ${SHADER_FILES} ${SHARED_FILES})
 target_include_directories(${MODULE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/shared")
 
 # Link Libraries
-target_link_libraries(${MODULE_NAME} PRIVATE glfw LVKLibrary LVKstb ktx assimp)
+target_link_libraries(${MODULE_NAME} PRIVATE glfw LVKLibrary LVKstb assimp)
 
 # Compile definations
 target_compile_definitions(${MODULE_NAME} PRIVATE RESOURCE_DIR="${CMAKE_SOURCE_DIR}/resources")

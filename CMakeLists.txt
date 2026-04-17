@@ -5,6 +5,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project("Shading")
 
+# Turn off LVK Samples
+set(LVK_WITH_SAMPLES OFF CACHE BOOL "" FORCE)
+set(LVK_WITH_SAMPLES_ANDROID OFF CACHE BOOL "" FORCE)
+set(LVK_DEPLOY_SCREENSHOT_TESTS OFF CACHE BOOL "" FORCE)
+
 # Add externals
 add_subdirectory("external/lvk")
 add_subdirectory("external/assimp")
